@@ -1,10 +1,11 @@
 package com.example.student_service.service;
+import com.example.student_service.dto.School;
 import com.example.student_service.dto.StudentWithSchool;
 import com.example.student_service.entity.Student;
+import com.example.student_service.feign.SchoolClient;
 import com.example.student_service.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,7 @@ public class StudentService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private RestTemplate restTemplate; // To call School Microservice
+    private SchoolClient schoolClient;
 
     public Student createStudent(Student student) {
         return studentRepository.save(student);
@@ -39,9 +40,8 @@ public class StudentService {
         if (studentOptional.isPresent()) {
             Student student = studentOptional.get();
 
-            // 🔥 Change from localhost:8080 to Eureka-based call
-            String schoolServiceUrl = "http://SCHOOL-SERVICE/api/schools/" + student.getSchoolId();
-            Object school = restTemplate.getForObject(schoolServiceUrl, Object.class);
+            // 🔥 Feign automatically calls SCHOOL-SERVICE!
+            School school = schoolClient.getSchoolById(student.getSchoolId());
 
             return new StudentWithSchool(student, school);
         }
