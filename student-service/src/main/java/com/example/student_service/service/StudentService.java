@@ -39,8 +39,8 @@ public class StudentService {
         if (studentOptional.isPresent()) {
             Student student = studentOptional.get();
 
-            // Call School Microservice to get school details
-            String schoolServiceUrl = "http://localhost:8080/api/schools/" + student.getSchoolId();
+            // 🔥 Change from localhost:8080 to Eureka-based call
+            String schoolServiceUrl = "http://SCHOOL-SERVICE/api/schools/" + student.getSchoolId();
             Object school = restTemplate.getForObject(schoolServiceUrl, Object.class);
 
             return new StudentWithSchool(student, school);
