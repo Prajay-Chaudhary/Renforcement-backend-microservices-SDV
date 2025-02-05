@@ -27,5 +27,23 @@ eureka:
 # Enable Dynamic Route Discovery
 spring.cloud.gateway.discovery.locator.enabled: true
 
+
+
+#Actuator config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      gateway:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 server:
   port: 8082
