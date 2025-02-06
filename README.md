@@ -101,7 +101,7 @@ server:
 ## 🔐 **JWT Authentication Flow**
 1️⃣ **User Registers** via `/api/auth/register`
 2️⃣ **User Logs In** via `/api/auth/login` → Receives JWT token.
-3️⃣ **User Calls Protected APIs** (e.g., `/api/schools/list`) with `Authorization: Bearer <token>`.
+3️⃣ **User Calls Protected APIs** (e.g., `/api/schools`) with `Authorization: Bearer <token>`.
 4️⃣ **API Gateway Validates JWT** before forwarding the request.
 
 ---
@@ -128,7 +128,7 @@ curl -X POST http://localhost:8082/api/auth/login \
 
 ### **3️⃣ Access a Protected Route (Requires JWT)**
 ```sh
-curl -X GET http://localhost:8082/api/schools/list \
+curl -X GET http://localhost:8082/api/schools \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 ```
 ✅ Response: List of schools
