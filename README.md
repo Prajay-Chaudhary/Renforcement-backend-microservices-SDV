@@ -16,9 +16,12 @@ This project implements a **microservices architecture** with authentication and
 - **Spring Boot** (WebFlux, Security, Cloud Gateway, Data JPA)
 - **Spring Cloud Gateway** (API Gateway)
 - **Spring Security** (JWT Authentication)
-- **PostgreSQL && MongoDB** (Database for Auth Service)
+- **PostgreSQL && MongoDB** (Database for the different Service)
 - **Eureka** (Service Discovery)
 - **JJWT** (JWT Authentication & Verification)
+- **lombok**
+- ** openfeign**
+- **spring boot actuator**
 
 ---
 
@@ -77,11 +80,9 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://localhost:9003
+          uri: lb://AUTH-SERVICE
           predicates:
             - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
         - id: school-service
           uri: lb://SCHOOL-SERVICE
           predicates:
@@ -90,15 +91,46 @@ spring:
           uri: lb://STUDENT-SERVICE
           predicates:
             - Path=/api/students/**
-  
-# Eureka Discovery
+
+# Eureka Client Configuration
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka/
+
+# Enable Dynamic Route Discovery
+spring.cloud.gateway.discovery.locator.enabled: true
+
+
+
+#Actuator config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      gateway:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 server:
   port: 8082
 ```
 
 ---
 
-## 🔐 **JWT Authentication Flow**
+## 🔐 **JWT Authentication Flow via the Gateway**
 1️⃣ **User Registers** via `/api/auth/register`
 2️⃣ **User Logs In** via `/api/auth/login` → Receives JWT token.
 3️⃣ **User Calls Protected APIs** (e.g., `/api/schools`) with `Authorization: Bearer <token>`.
@@ -140,15 +172,26 @@ curl -X GET http://localhost:8082/api/schools \
 Located in `JwtAuthFilter.java`:
 ```java
 @Component
-public class JwtAuthFilter implements GlobalFilter {
-    private static final String SECRET_KEY = "mySecretKeymySecretKeymySecretKey";
+public class JwtAuthFilter implements GlobalFilter, Ordered {
+
+    private static final String SECRET_KEY = "mySecretKeymySecretKeymySecretKeymySecretKey"; // 32+ characters
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String path = exchange.getRequest().getPath().toString();
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+        // Allow unauthenticated access to Auth Service (login & register)
+        List<String> openEndpoints = List.of("/api/auth/login", "/api/auth/register");
+        if (openEndpoints.stream().anyMatch(path::contains)) {
+            return chain.filter(exchange);
+        }
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+
         String token = authHeader.substring(7);
         try {
             Claims claims = Jwts.parser()
@@ -156,11 +199,23 @@ public class JwtAuthFilter implements GlobalFilter {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+
+            // Token is valid, proceed with the request
             return chain.filter(exchange);
         } catch (Exception e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    @Override
+    public int getOrder() {
+        return -1;
     }
 }
 ```
