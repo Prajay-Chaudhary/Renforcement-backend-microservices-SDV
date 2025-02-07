@@ -37,7 +37,7 @@ This project implements a **microservices architecture** with authentication and
 ## 🚀 Setting Up The Project
 ### 1️⃣ **Clone the Repository**
 ```sh
-git clone https://github.com/Prajay-Chaudhary/school-student-microservice-SDV.git
+git clone https://github.com/Prajay-Chaudhary/Renforcement-backend-microservices-SDV.git
 cd microservices-auth
 ```
 
