@@ -1,6 +1,9 @@
 # Microservices Authentication & API Gateway Project
 
 ## 📌 Overview
+
+A school management microservices system allowing schools to manage student records and students to securely access school-related data using JWT-based authentication.
+
 This project implements a **microservices architecture** with authentication and authorization using **Spring Boot, Spring Cloud Gateway, JWT (JSON Web Token), and Eureka Service Discovery**. The system consists of:
 
 - **API Gateway** (`8082`): Handles authentication and request routing.
